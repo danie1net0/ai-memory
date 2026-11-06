@@ -183,11 +183,12 @@ list is introduced. The first three agents:
 | Codex | `~/.agents/skills` (shared with Qwen, Qoder) | `%USERPROFILE%\.agents\skills` | same |
 | Copilot CLI | `$COPILOT_HOME/skills`, default `~/.copilot/skills` | `%USERPROFILE%\.copilot\skills` | `install_skills.rs` only |
 
-Two gaps in the shipped commands surface here and are fixed as part of
-phase 1:
+Two gaps in the shipped commands surface here:
 
-- `backup-agents` does not collect Copilot CLI's `~/.copilot/skills`, although
-  `install-skills --agent copilot-cli` writes there.
+- `backup-agents` did not collect Copilot CLI's skill roots, although
+  `install-skills --agent copilot-cli` writes there. Fixed alongside this
+  proposal: it now archives `$COPILOT_HOME/skills` and `.github/skills`, and
+  `restore-agents` restores them.
 - Several agents share one physical root (`~/.agents/skills`). Sync installs
   into each **physical** root once, after canonicalising roots, so a shared
   root is never written twice per run.
@@ -354,8 +355,10 @@ docs.
 1. **Shared foundation (refactor + fix).** Move skill-root discovery, path
    validation, symlink checks and the atomic write/rollback out of
    `backup_agents.rs` / `restore_agents.rs` into a shared module, with no
-   behaviour change. Add the Copilot CLI global root to `backup-agents`.
-   Add the tree-digest function with tests.
+   behaviour change, and add the tree-digest function, in the same pull
+   request as their first caller (phase 2) so no unused surface ships. The
+   Copilot CLI roots in `backup-agents` / `restore-agents` already landed as
+   a standalone fix.
 2. **Local collection.** `skills init`, `add`, `remove`, `status`, and `pull
    --apply` against a collection that has no remote: install from collection
    into roots, base tracking, the conflict table, secret gate on `add`.
